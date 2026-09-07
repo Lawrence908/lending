@@ -1,0 +1,5 @@
+{
+ "series_group": "meta",
+ "built": "2026-09-07",
+ "note": "Lending has no curated projection and no hand ritual. Everything on the page is fetched or computed. The pre-1990 SLOOS gap is an upstream fact recorded in the series notes, deliberately not filled from the Fed's non-FRED historical tables in v1."
+}

@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Are Banks Tightening? Lending Standards and What Followed</title>
+<meta name="description" content="Lending standards lead the credit cycle and lending volumes trail it. The Fed's Senior Loan Officer Survey since 1990 with every tightening episode scored, C&I loan contractions since 1948 with their lags computed, delinquencies, and Canada's SLOS and BOS balances.">
+<link rel="stylesheet" href="/shared-footer/footer.css">
+<style>
+:root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --plane: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #4a3aa7;
+  --tooltip-bg: rgba(252,252,251,0.97);
+  --warn: #b3541e;
+  --band-alpha: 0.09;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --plane: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #9085e9;
+    --tooltip-bg: rgba(26,26,25,0.97);
+    --warn: #e08a4f;
+    --band-alpha: 0.13;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255,255,255,0.10);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #9085e9;
+  --tooltip-bg: rgba(26,26,25,0.97);
+  --warn: #e08a4f;
+  --band-alpha: 0.13;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 8px; }
+
+header h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; }
+header p.sub { margin: 0; color: var(--text-secondary); max-width: 68ch; }
+.chip {
+  display: inline-flex; align-items: baseline; gap: 8px; margin-top: 16px;
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-1); font-size: 0.82rem; color: var(--text-secondary);
+}
+.chip[hidden] { display: none; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--series-3); flex: none; align-self: center; }
+.chip[data-state="signal"] .dot { background: var(--series-2); }
+.chip b { color: var(--text-primary); font-weight: 650; }
+.stamp { margin-top: 10px; font-size: 0.82rem; color: var(--muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.tile .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.tile .value { font-size: 1.85rem; font-weight: 650; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.tile .note { font-size: 0.8rem; color: var(--text-secondary); }
+
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px; margin: 16px 0; }
+.card h2 { font-size: 1.05rem; margin: 0 0 2px; letter-spacing: -0.01em; }
+.card p.cap { margin: 0 0 12px; font-size: 0.85rem; color: var(--text-secondary); max-width: 90ch; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 12px; }
+.group { display: flex; gap: 4px; flex-wrap: wrap; }
+.group .glabel { font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px; }
+button.seg {
+  font: inherit; font-size: 0.82rem; padding: 5px 11px; cursor: pointer;
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: 999px;
+}
+button.seg:hover { background: var(--grid); }
+button.seg[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 8px; font-size: 0.85rem; color: var(--text-secondary); }
+.legend span.item { display: flex; align-items: center; gap: 7px; }
+.legend .swatch { width: 14px; height: 3px; border-radius: 2px; }
+.legend .swatch.dashed { background: none !important; border-top: 3px dashed; width: 14px; height: 0; border-radius: 0; }
+.legend .swatch.band { width: 14px; height: 10px; border: 1px solid var(--border); }
+
+.plot { position: relative; width: 100%; }
+canvas { display: block; width: 100%; touch-action: pan-y; }
+.tooltip {
+  position: absolute; pointer-events: none; opacity: 0; transition: opacity .08s;
+  background: var(--tooltip-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font-size: 0.8rem; line-height: 1.45; white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.14); z-index: 5; color: var(--text-primary);
+}
+.tooltip .tdate { color: var(--muted); font-size: 0.74rem; margin-bottom: 3px; }
+.tooltip .trow { display: flex; align-items: center; gap: 7px; }
+.tooltip .tval { font-variant-numeric: tabular-nums; margin-left: auto; padding-left: 14px; font-weight: 600; }
+
+.status { color: var(--text-secondary); font-size: 0.9rem; padding: 40px 0; text-align: center; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td .tag { color: var(--muted); font-size: 0.78rem; }
+.tablewrap { overflow-x: auto; }
+
+.prose { font-size: 0.92rem; color: var(--text-secondary); }
+.prose h3 { font-size: 0.95rem; color: var(--text-primary); margin: 18px 0 6px; }
+.prose ul { padding-left: 20px; margin: 6px 0; }
+.prose li { margin-bottom: 7px; }
+.prose a { color: var(--series-1); }
+.prose code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; background: var(--plane); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+
+/* A figure the data could not supply renders as a visible gap, never as a
+   silently vanished number. */
+[data-tok] { font-variant-numeric: tabular-nums; }
+.tok-missing { color: var(--warn); border-bottom: 1px dashed var(--warn); }
+
+/* The hub footer is styled by /shared-footer/footer.css, linked above and
+   served by Caddy's shared_footer snippet. Deliberately not restyled here. */
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Are Banks Tightening?</h1>
+    <p class="sub">Lending standards are the earliest of the credit clocks: loan officers tighten before spreads blow out and, usually, before recessions arrive. Lending volumes are the opposite, trailing the cycle by quarters. This page shows both ends of the pipeline and computes both claims: the Fed's Senior Loan Officer Survey since 1990 with every tightening episode scored, and C&amp;I loan contractions since 1948 with their lags measured. Nothing here is a forecast.</p>
+    <p class="chip" id="chip" hidden></p>
+    <p class="stamp" id="stamp">Loading data…</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card">
+    <h2>C&amp;I lending standards, quarterly since 1990</h2>
+    <p class="cap">Net percentage of banks tightening standards for commercial and industrial loans; positive means more tightened than eased. The dashed rule is the +20 alarm threshold the table below scores against. Demand is the other blade of the scissors: standards tighten as demand collapses. Shaded bands are NBER recessions.</p>
+    <div class="controls">
+      <div class="group" role="group" aria-label="Series">
+        <span class="glabel">Series</span>
+        <button class="seg" data-series="demand" aria-pressed="false">Loan demand</button>
+      </div>
+    </div>
+    <div class="legend" id="legend-main"></div>
+    <div class="plot"><canvas id="c-main" height="380"></canvas><div class="tooltip" id="t-main"></div></div>
+    <p class="status" id="status">Fetching the loan officers' answers…</p>
+  </section>
+
+  <section class="card">
+    <h2>Every tightening episode, scored</h2>
+    <p class="cap" id="rule-cap">Computed from the survey on every refresh, never hand-maintained. <span data-tok="rule_statement">…</span></p>
+    <div class="tablewrap"><table id="ep-tbl">
+      <thead><tr><th>Easing trough</th><th>Alarm fired</th><th>Peak</th><th>Quarters</th><th>Recession began</th><th>Lead from alarm</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="prose" style="margin:12px 0 0">
+      <p>The survey era is short but its record is clean: every recession since 1990 sits in this table, none missed. The alarm led <span data-tok="alarm_led">…</span> of the <span data-tok="credited">…</span>, most clearly into 2001, and trailed the two recessions that arrived as shocks. That makes standards the earliest of the credit clocks: on the <a href="https://credit.chrislawrence.ca">credit page</a> the spread alarm led once in a century, while here the loan officers beat two of four. The longer clocks still sit upstream, on the <a href="https://housing.chrislawrence.ca">housing</a> and <a href="https://yield.chrislawrence.ca">yield</a> pages; the family's sequencing is computed across all four tables.</p>
+      <p>Two absences are worth naming. Late 1998 spiked to the threshold for a single quarter and does not qualify under the printed rule; absence under a printed rule is information, and the LTCM scare is exactly the kind of blip the two-quarter gate exists to exclude. And the survey itself begins in 1990-Q2 mid-tightening, so the first row's easing trough is unknowable and renders as left-censored rather than being back-filled. <strong><span data-tok="newest_label">…</span></strong>: <span data-tok="newest_row">…</span></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Willingness to lend to consumers, since 1982</h2>
+    <p class="cap">The deepest survey record on FRED, eight years older than the standards series. <strong>The sign runs the other way</strong>: positive means banks report MORE willingness to make consumer instalment loans, so recessions read as plunges here, not spikes.</p>
+    <div class="legend" id="legend-will"></div>
+    <div class="plot"><canvas id="c-will" height="300"></canvas><div class="tooltip" id="t-will"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>The volumes, trailing: loan growth since 1948</h2>
+    <p class="cap">Year-over-year growth of bank C&amp;I loans, bank real estate loans, and total consumer credit. Volumes are the lagging end of the pipeline, and the table beneath measures exactly how lagging.</p>
+    <div class="legend" id="legend-vol"></div>
+    <div class="plot"><canvas id="c-vol" height="340"></canvas><div class="tooltip" id="t-vol"></div></div>
+    <h2 style="margin-top:18px">When C&amp;I lending actually shrank</h2>
+    <p class="cap"><span data-tok="contraction_rule">…</span></p>
+    <div class="tablewrap"><table id="con-tbl">
+      <thead><tr><th>Contraction began</th><th>Ended</th><th>Months</th><th>Deepest</th><th>Recession peak</th><th>Lag</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="prose" style="margin:10px 0 0">The finding, computed: of the <span data-tok="con_attached">…</span> contractions attachable to a recession, <span data-tok="con_after">…</span> began after the recession had already started, with a median lag of <span data-tok="con_median">…</span> months. Falling loan books are a symptom, not a warning. The unattached rows are the interesting ones: <span data-tok="con_unattached">…</span> contraction(s) with no recession within two years, most recently C&amp;I books shrinking through 2025 with no downturn attached.</p>
+  </section>
+
+  <section class="card">
+    <h2>The outcome side: delinquencies since 1985</h2>
+    <p class="cap">Loans actually going bad, quarterly, all commercial banks. Standards move first, delinquencies confirm one to two years later. Current readings sit near cycle lows, which is the complacency echo of neutral standards.</p>
+    <div class="legend" id="legend-dq"></div>
+    <div class="plot"><canvas id="c-dq" height="320"></canvas><div class="tooltip" id="t-dq"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Canada: lenders said, borrowers felt</h2>
+    <p class="cap">Two live quarterly balances asking the same question from both sides. The Bank of Canada's Senior Loan Officer Survey (since 1999) reports business lending conditions from the lenders; the Business Outlook Survey (since 2000) reports credit conditions as firms experienced them. Positive means tightening in both. Shading is the C.D. Howe chronology.</p>
+    <div class="legend" id="legend-ca"></div>
+    <div class="plot"><canvas id="c-ca" height="320"></canvas><div class="tooltip" id="t-ca"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Revisions to published history</h2>
+    <p class="cap" id="rev-cap">Checking…</p>
+    <div class="tablewrap" id="rev-wrap" style="display:none"><table id="rev-tbl">
+      <thead><tr><th>Observed</th><th>Series</th><th>Values changed</th><th>Span</th><th>Largest change</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="prose" style="margin:10px 0 0">Survey balances are never restated; the H.8 loan aggregates are benchmarked routinely, so entries here will mostly be the volume series doing their normal thing. Every refresh is diffed against the one before it; any change to an already-published value is recorded.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sources and construction</h2>
+    <div class="prose" style="margin-top:6px">
+      <h3>United States</h3>
+      <ul>
+        <li><strong>Senior Loan Officer Opinion Survey</strong> via FRED: C&amp;I standards for large/mid firms <a href="https://fred.stlouisfed.org/series/DRTSCILM">DRTSCILM</a> and small firms <a href="https://fred.stlouisfed.org/series/DRTSCIS">DRTSCIS</a> (quarterly since 1990-Q2), consumer willingness <a href="https://fred.stlouisfed.org/series/DRIWCIL">DRIWCIL</a> (since 1982-Q2, sign inverted), C&amp;I demand <a href="https://fred.stlouisfed.org/series/DRSDCILM">DRSDCILM</a> (since 1991-Q4). The survey predates 1990; those older tabulations live in Fed publications, not FRED, and are deliberately not hand-transcribed in v1.</li>
+        <li><strong>Volumes</strong>: H.8 bank C&amp;I loans <a href="https://fred.stlouisfed.org/series/BUSLOANS">BUSLOANS</a> and real estate loans <a href="https://fred.stlouisfed.org/series/REALLN">REALLN</a> (monthly since 1947), G.19 consumer credit <a href="https://fred.stlouisfed.org/series/TOTALSL">TOTALSL</a> (since 1943), weekly bank credit <a href="https://fred.stlouisfed.org/series/TOTBKCR">TOTBKCR</a> (since 1973, in the payload). Year-over-year series computed here; levels ship alongside.</li>
+        <li><strong>Outcomes</strong>: delinquency rates <a href="https://fred.stlouisfed.org/series/DRALACBS">DRALACBS</a>, <a href="https://fred.stlouisfed.org/series/DRBLACBS">DRBLACBS</a>, <a href="https://fred.stlouisfed.org/series/DRCCLACBS">DRCCLACBS</a>, <a href="https://fred.stlouisfed.org/series/DRSFRMACBS">DRSFRMACBS</a> and charge-offs <a href="https://fred.stlouisfed.org/series/CORALACBS">CORALACBS</a>, quarterly from 1985/1987/1991.</li>
+        <li><strong>Recession bands</strong>: NBER dates via <a href="https://fred.stlouisfed.org/series/USREC">USREC</a>, from the shared dataset.</li>
+      </ul>
+      <h3>Canada</h3>
+      <ul>
+        <li><strong>Lenders</strong>: Bank of Canada <a href="https://www.bankofcanada.ca/publications/slos/">Senior Loan Officer Survey</a> via Valet, series SLOS_BUS_LEND with price and non-price splits, quarterly balance of opinion since 1999-Q2, positive = tightening.</li>
+        <li><strong>Borrowers</strong>: <a href="https://www.bankofcanada.ca/publications/bos/">Business Outlook Survey</a> credit conditions balance via Valet (tightened minus eased), quarterly since 2000-Q3.</li>
+        <li>The Bank's historical E2 credit aggregates (1971-2020, terminated at the methodology handoff) were considered and skipped as peripheral to the standards question.</li>
+        <li><strong>Recession bands</strong>: <a href="https://www.cdhowe.org/wp-content/uploads/2024/12/Commentary_366_0-2.pdf">C.D. Howe Institute Business Cycle Council</a> chronology, from the shared dataset.</li>
+      </ul>
+      <h3>Plumbing</h3>
+      <ul>
+        <li>FRED is fetched keyless-first (public CSV), keyed API as fallback; Valet has no keys. A failed fetch carries the stored series forward and says so.</li>
+        <li>Refreshes daily via cron: SLOOS lands quarterly on the Fed's schedule, H.8 on Fridays, G.19 monthly, delinquencies quarterly. Most runs verify rather than change; the stamp above says when data last moved.</li>
+        <li>Series follow the shared <code>econ-core</code> contract used across <a href="https://credit.chrislawrence.ca">credit</a>, <a href="https://housing.chrislawrence.ca">housing</a>, <a href="https://yield.chrislawrence.ca">yield</a>, <a href="https://jobs.chrislawrence.ca">jobs</a>, <a href="https://debt.chrislawrence.ca">debt</a> and <a href="https://diesel.chrislawrence.ca">diesel</a>, with a vintages field reserved for as-published views.</li>
+        <li>Raw data: <a href="/api/data">/api/data</a>, or the files under <a href="/data/series.json">/data/</a>.</li>
+        <li>Assembled with Claude (Anthropic). Survey balances, published aggregates, and computed history with both rules printed; no forecasts.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<footer class="chrislawrence-footer">
+  <a href="https://chrislawrence.ca" class="footer-home-link" aria-label="Back to chrislawrence.ca">
+    <img src="/shared-footer/logo-portrait.png" alt="Chris Lawrence" class="footer-logo"
+         width="32" height="32" loading="lazy" onerror="this.remove()">
+    <span class="footer-home-link-text">Back to chrislawrence.ca</span>
+  </a>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var YEAR = 365.25 * 86400000;
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var state = { p: null, showDemand: false };
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function rgba(hex, a) {
+    var n = parseInt(hex.replace("#", ""), 16);
+    return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")";
+  }
+  function ms(iso) { return Date.parse(iso + "T00:00:00Z"); }
+  function pts(entry) { return entry.obs.map(function (o) { return [ms(o[0]), o[1]]; }); }
+  function monthWord(ym) { var q = ym.split("-"); return MONTHS[+q[1] - 1] + " " + q[0]; }
+
+  function fmtNet(v) { return v === null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1); }
+  function fmtPct1(v) { return v === null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "%"; }
+  function fmtPct2v(v) { return v === null ? "—" : v.toFixed(2) + "%"; }
+
+  function niceTicks(lo, hi, target) {
+    var span = hi - lo; if (span <= 0) span = 1;
+    var raw = span / target;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var norm = raw / mag;
+    var step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+    var ticks = [];
+    for (var k = Math.ceil(lo / step); k * step <= hi + step * 0.001; k++) {
+      ticks.push(Math.round(k * step * 1e6) / 1e6);
+    }
+    return ticks;
+  }
+
+  // ------------------------------------------------------------------
+  // Time-scaled canvas chart: mixed frequencies, recession bands,
+  // dashed segments, threshold rule, crosshair tooltip. Shared engine.
+  // ------------------------------------------------------------------
+  function TimeChart(canvasId, tooltipId, opts) {
+    this.canvas = document.getElementById(canvasId);
+    this.tip = document.getElementById(tooltipId);
+    this.opts = opts || {};
+    this.hover = null;
+    this.h = parseInt(this.canvas.getAttribute("height"), 10) || 300;
+    var self = this;
+    this.canvas.addEventListener("mousemove", function (e) { self.onMove(e.clientX); });
+    this.canvas.addEventListener("mouseleave", function () { self.clearHover(); });
+    this.canvas.addEventListener("touchmove", function (e) { if (e.touches[0]) self.onMove(e.touches[0].clientX); }, { passive: true });
+    this.canvas.addEventListener("touchend", function () { self.clearHover(); });
+    this.canvas.addEventListener("touchcancel", function () { self.clearHover(); });
+  }
+
+  TimeChart.prototype.clearHover = function () { this.hover = null; this.tip.style.opacity = 0; this.draw(); };
+
+  TimeChart.prototype.setData = function (series, bands) {
+    this.series = series.filter(function (s) { return s.points.length; });
+    this.bands = bands || [];
+    var union = [];
+    this.series.forEach(function (s) {
+      s.medGap = medianGap(s.points);
+      s.points.forEach(function (pt) { union.push(pt[0]); });
+    });
+    union.sort(function (a, b) { return a - b; });
+    this.union = union.filter(function (v, i) { return i === 0 || v !== union[i - 1]; });
+    this.hover = null;
+    this.draw();
+  };
+
+  function medianGap(points) {
+    if (points.length < 2) return YEAR;
+    var gaps = [];
+    for (var i = 1; i < points.length; i++) gaps.push(points[i][0] - points[i - 1][0]);
+    gaps.sort(function (a, b) { return a - b; });
+    return gaps[Math.floor(gaps.length / 2)];
+  }
+
+  function nearest(points, t) {
+    var lo = 0, hi = points.length - 1;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (points[mid][0] < t) lo = mid + 1; else hi = mid; }
+    if (lo > 0 && Math.abs(points[lo - 1][0] - t) < Math.abs(points[lo][0] - t)) lo -= 1;
+    return lo;
+  }
+
+  TimeChart.prototype.onMove = function (clientX) {
+    if (!this.geom || !this.union || !this.union.length) return;
+    var rect = this.canvas.getBoundingClientRect();
+    var g = this.geom;
+    var t = this.x0 + (clientX - rect.left - g.left) / (g.right - g.left) * (this.x1 - this.x0);
+    var k = nearest(this.union.map(function (v) { return [v, 0]; }), t);
+    var snapped = this.union[Math.max(0, Math.min(this.union.length - 1, k))];
+    if (snapped === this.hover) return;
+    this.hover = snapped;
+    this.draw();
+    this.showTip(snapped, rect);
+  };
+
+  TimeChart.prototype.showTip = function (t, rect) {
+    var monthly = true;
+    this.series.forEach(function (s) { if (s.medGap < 20 * 86400000) monthly = false; });
+    var html = '<div class="tdate">' + new Date(t).toISOString().slice(0, monthly ? 7 : 10) + "</div>";
+    var shown = 0;
+    this.series.forEach(function (s) {
+      var i = nearest(s.points, t);
+      var pt = s.points[i];
+      if (Math.abs(pt[0] - t) > s.medGap * 0.75) return;
+      html += '<div class="trow"><span class="swatch" style="background:' + css(s.color) + '"></span>' +
+              s.name + '<span class="tval">' + (s.fmt || fmtNet)(pt[1]) + "</span></div>";
+      shown++;
+    });
+    if (!shown) { this.tip.style.opacity = 0; return; }
+    this.tip.innerHTML = html;
+    this.tip.style.opacity = 1;
+    var g = this.geom;
+    var px = g.left + (t - this.x0) / (this.x1 - this.x0) * (g.right - g.left);
+    var w = this.tip.offsetWidth;
+    var left = px + 14;
+    if (left + w > rect.width - 4) left = px - w - 14;
+    if (left < 4) left = 4;
+    this.tip.style.left = left + "px";
+    this.tip.style.top = "14px";
+  };
+
+  TimeChart.prototype.draw = function () {
+    var cv = this.canvas, ctx = cv.getContext("2d");
+    var dpr = window.devicePixelRatio || 1;
+    var w = cv.clientWidth, h = this.h;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    cv.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (!this.series || !this.series.length) return;
+
+    var pad = { l: 46, r: 12, t: 10, b: 26 };
+    var g = { left: pad.l, right: w - pad.r, top: pad.t, bottom: h - pad.b };
+    this.geom = g;
+
+    var x0 = Infinity, x1 = -Infinity, lo = Infinity, hi = -Infinity;
+    this.series.forEach(function (s) {
+      s.points.forEach(function (pt) {
+        if (pt[0] < x0) x0 = pt[0];
+        if (pt[0] > x1) x1 = pt[0];
+        if (pt[1] !== null && isFinite(pt[1])) { if (pt[1] < lo) lo = pt[1]; if (pt[1] > hi) hi = pt[1]; }
+      });
+    });
+    if (!isFinite(lo)) return;
+    var padY = (hi - lo) * 0.08 || 1;
+    lo -= padY; hi += padY;
+    if (this.opts.includeZero && lo > 0) lo = 0;
+    if (this.opts.includeZero && hi < 0) hi = 0;
+    this.x0 = x0; this.x1 = x1;
+
+    var muted = css("--muted"), grid = css("--grid"), axis = css("--axis");
+    var X = function (t) { return g.left + (t - x0) / Math.max(1, x1 - x0) * (g.right - g.left); };
+    var Y = function (v) { return g.bottom - (v - lo) / (hi - lo) * (g.bottom - g.top); };
+
+    // recession bands first, behind everything
+    (this.bands || []).forEach(function (b) {
+      var s = Math.max(x0, b.start), e = Math.min(x1, b.end);
+      if (e <= s) return;
+      ctx.fillStyle = b.fill;
+      ctx.fillRect(X(s), g.top, Math.max(1, X(e) - X(s)), g.bottom - g.top);
+    });
+
+    // y grid
+    ctx.font = "11px system-ui, sans-serif";
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    var yt = niceTicks(lo, hi, 6);
+    var yFmt = this.opts.yFmt || function (v) { return String(Math.round(v * 100) / 100); };
+    yt.forEach(function (v) {
+      var y = Y(v);
+      ctx.strokeStyle = grid; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(g.left, Math.round(y) + 0.5); ctx.lineTo(g.right, Math.round(y) + 0.5); ctx.stroke();
+      ctx.fillStyle = muted;
+      ctx.fillText(yFmt(v), g.left - 8, y);
+    });
+
+    // zero line where it matters
+    if (lo < 0 && hi > 0) {
+      ctx.strokeStyle = axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(g.left, Math.round(Y(0)) + 0.5); ctx.lineTo(g.right, Math.round(Y(0)) + 0.5); ctx.stroke();
+    }
+
+    // threshold rule (the alarm line)
+    if (this.opts.threshold !== undefined && this.opts.threshold > lo && this.opts.threshold < hi) {
+      var ty = Y(this.opts.threshold);
+      ctx.strokeStyle = muted; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(g.left, Math.round(ty) + 0.5); ctx.lineTo(g.right, Math.round(ty) + 0.5); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillStyle = muted;
+      ctx.fillText(this.opts.thresholdLabel || "", g.left + 4, ty - 2);
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    }
+
+    // x ticks: years, thinned by span
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    var firstYear = new Date(x0).getUTCFullYear();
+    var lastYear = new Date(x1).getUTCFullYear();
+    var years = lastYear - firstYear;
+    var stepY = years > 60 ? 10 : years > 30 ? 5 : years > 12 ? 2 : 1;
+    for (var yr = Math.ceil(firstYear / stepY) * stepY; yr <= lastYear; yr += stepY) {
+      var t = Date.UTC(yr, 0, 1);
+      if (t < x0 || t > x1) continue;
+      var px = X(t);
+      ctx.strokeStyle = grid; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.round(px) + 0.5, g.top); ctx.lineTo(Math.round(px) + 0.5, g.bottom); ctx.stroke();
+      ctx.fillStyle = muted; ctx.fillText(String(yr), px, g.bottom + 6);
+    }
+
+    // axis baseline
+    ctx.strokeStyle = axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(g.left, Math.round(g.bottom) + 0.5); ctx.lineTo(g.right, Math.round(g.bottom) + 0.5); ctx.stroke();
+
+    // series
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    var surface = css("--surface-1");
+    this.series.forEach(function (s) {
+      var color = css(s.color);
+      ctx.strokeStyle = color; ctx.lineWidth = s.width || 2;
+      ctx.setLineDash(s.dash ? [5, 4] : []);
+      ctx.beginPath();
+      var pen = false;
+      s.points.forEach(function (pt) {
+        if (pt[1] === null || !isFinite(pt[1])) { pen = false; return; }
+        var xx = X(pt[0]), yy = Y(pt[1]);
+        if (!pen) { ctx.moveTo(xx, yy); pen = true; } else { ctx.lineTo(xx, yy); }
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // crosshair + hover markers
+    if (this.hover !== null) {
+      var hx = X(this.hover);
+      ctx.strokeStyle = axis; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(Math.round(hx) + 0.5, g.top); ctx.lineTo(Math.round(hx) + 0.5, g.bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      var hoverT = this.hover;
+      this.series.forEach(function (s) {
+        var i = nearest(s.points, hoverT);
+        var pt = s.points[i];
+        if (Math.abs(pt[0] - hoverT) > s.medGap * 0.75 || pt[1] === null) return;
+        ctx.beginPath(); ctx.arc(X(pt[0]), Y(pt[1]), 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = css(s.color); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = surface; ctx.stroke();
+      });
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // assembly
+  // ------------------------------------------------------------------
+  var charts = {
+    main: new TimeChart("c-main", "t-main", { includeZero: true, threshold: 20, thresholdLabel: "+20 alarm", yFmt: function (v) { return fmtNet(v); } }),
+    will: new TimeChart("c-will", "t-will", { includeZero: true, yFmt: function (v) { return fmtNet(v); } }),
+    vol: new TimeChart("c-vol", "t-vol", { includeZero: true, yFmt: function (v) { return Math.round(v) + "%"; } }),
+    dq: new TimeChart("c-dq", "t-dq", { includeZero: true, yFmt: function (v) { return v.toFixed(1) + "%"; } }),
+    ca: new TimeChart("c-ca", "t-ca", { includeZero: true, yFmt: function (v) { return fmtNet(v); } })
+  };
+
+  function S(id) {
+    var p = state.p;
+    return (p && p.series && p.series[id]) || null;
+  }
+
+  function bandList(which, fromMs) {
+    var p = state.p, out = [];
+    if (!p || !p.recessions) return out;
+    var defs = [
+      { key: "us", set: p.recessions.us, varName: "--series-1" },
+      { key: "ca", set: p.recessions.ca, varName: "--series-2" }
+    ];
+    var alpha = parseFloat(css("--band-alpha")) || 0.09;
+    defs.forEach(function (d) {
+      if (which.indexOf(d.key) === -1 || !d.set) return;
+      d.set.bands.forEach(function (b) {
+        var start = ms(b.peak + "-01");
+        var trough = b.trough.split("-");
+        var end = Date.UTC(+trough[0], +trough[1], 1) - 86400000;
+        if (end < fromMs) return;
+        out.push({ start: start, end: end, fill: rgba(css(d.varName), alpha) });
+      });
+    });
+    return out;
+  }
+
+  function legend(elId, items) {
+    document.getElementById(elId).innerHTML = items.map(function (it) {
+      var cls = "swatch" + (it.dash ? " dashed" : "") + (it.band ? " band" : "");
+      var style = it.band
+        ? "background:" + rgba(css(it.color), parseFloat(css("--band-alpha")) * 2)
+        : (it.dash ? "border-top-color:" + css(it.color) : "background:" + css(it.color));
+      return '<span class="item"><span class="' + cls + '" style="' + style + '"></span>' + it.name + "</span>";
+    }).join("");
+  }
+
+  function renderMain() {
+    var large = S("us_std_ci_large"), small = S("us_std_ci_small"), demand = S("us_demand_ci_large");
+    var series = [];
+    if (large) series.push({ name: "Standards, large/mid firms", color: "--series-1", points: pts(large) });
+    if (small) series.push({ name: "Standards, small firms", color: "--series-3", width: 1.5, points: pts(small) });
+    if (state.showDemand && demand) series.push({ name: "Loan demand", color: "--series-4", dash: true, points: pts(demand) });
+    charts.main.setData(series, bandList(["us"], large ? pts(large)[0][0] : -Infinity));
+    var items = [
+      { name: "C&I standards, large/mid firms", color: "--series-1" },
+      { name: "C&I standards, small firms", color: "--series-3" }
+    ];
+    if (state.showDemand) items.push({ name: "C&I loan demand (dashed)", color: "--series-4", dash: true });
+    items.push({ name: "US recessions (NBER)", color: "--series-1", band: true });
+    legend("legend-main", items);
+  }
+
+  function renderRest() {
+    var will = S("us_willingness_consumer");
+    if (will) charts.will.setData([
+      { name: "Willingness (positive = more willing)", color: "--series-2", points: pts(will) }
+    ], bandList(["us"], pts(will)[0][0]));
+    legend("legend-will", [
+      { name: "Net % more willing to lend to consumers", color: "--series-2" },
+      { name: "US recessions", color: "--series-1", band: true }
+    ]);
+
+    var ci = S("us_ci_loans_yoy"), re = S("us_re_loans_yoy"), cc = S("us_consumer_credit_yoy");
+    charts.vol.setData([
+      ci && { name: "C&I loans YoY", color: "--series-1", points: pts(ci), fmt: fmtPct1 },
+      re && { name: "Real estate loans YoY", color: "--series-3", width: 1.5, points: pts(re), fmt: fmtPct1 },
+      cc && { name: "Consumer credit YoY", color: "--series-4", width: 1.5, points: pts(cc), fmt: fmtPct1 }
+    ].filter(Boolean), bandList(["us"], ci ? pts(ci)[0][0] : -Infinity));
+    legend("legend-vol", [
+      { name: "Bank C&I loans", color: "--series-1" },
+      { name: "Bank real estate loans", color: "--series-3" },
+      { name: "Consumer credit, all holders", color: "--series-4" },
+      { name: "US recessions", color: "--series-1", band: true }
+    ]);
+
+    var dqa = S("us_delinq_all"), dqb = S("us_delinq_business"), dqc = S("us_delinq_cards"), dqm = S("us_delinq_mortgages");
+    charts.dq.setData([
+      dqa && { name: "All loans", color: "--series-1", points: pts(dqa), fmt: fmtPct2v },
+      dqb && { name: "Business", color: "--series-3", width: 1.5, points: pts(dqb), fmt: fmtPct2v },
+      dqc && { name: "Credit cards", color: "--series-2", width: 1.5, points: pts(dqc), fmt: fmtPct2v },
+      dqm && { name: "Mortgages", color: "--series-4", width: 1.5, points: pts(dqm), fmt: fmtPct2v }
+    ].filter(Boolean), bandList(["us"], dqa ? pts(dqa)[0][0] : -Infinity));
+    legend("legend-dq", [
+      { name: "All loans", color: "--series-1" },
+      { name: "Business", color: "--series-3" },
+      { name: "Credit cards", color: "--series-2" },
+      { name: "Single-family mortgages", color: "--series-4" },
+      { name: "US recessions", color: "--series-1", band: true }
+    ]);
+
+    var slos = S("ca_slos_business"), bos = S("ca_bos_credit");
+    charts.ca.setData([
+      slos && { name: "SLOS: lenders", color: "--series-2", points: pts(slos) },
+      bos && { name: "BOS: borrowers", color: "--series-4", dash: true, points: pts(bos) }
+    ].filter(Boolean), bandList(["ca"], slos ? pts(slos)[0][0] : -Infinity));
+    legend("legend-ca", [
+      { name: "Lenders (SLOS business conditions)", color: "--series-2" },
+      { name: "Borrowers (BOS credit conditions, dashed)", color: "--series-4", dash: true },
+      { name: "Canadian recessions (C.D. Howe)", color: "--series-2", band: true }
+    ]);
+  }
+
+  function renderAll() { renderMain(); renderRest(); }
+
+  // ------------------------------------------------------------------
+  // tokens: prose numbers render from data, never from markup
+  // ------------------------------------------------------------------
+  function fillTokens(map) {
+    document.querySelectorAll("[data-tok]").forEach(function (el) {
+      var key = el.getAttribute("data-tok");
+      if (map[key] === undefined) { el.classList.add("tok-missing"); el.textContent = "⟨" + key + "⟩"; }
+      else el.textContent = map[key];
+    });
+  }
+
+  function buildTokens(p) {
+    var map = {};
+    var an = p.analysis || {};
+    var ep = an.episodes || {};
+    if (ep.rule) map.rule_statement = ep.rule.statement;
+    var stats = ep.stats || {};
+    if (stats.credited_episodes !== undefined) {
+      map.credited = String(stats.credited_episodes);
+      map.alarm_led = String(stats.alarm_led);
+    }
+    var con = an.contractions || {};
+    if (con.rule) map.contraction_rule = con.rule.statement;
+    var cstats = con.stats || {};
+    if (cstats.attached !== undefined) {
+      map.con_attached = String(cstats.attached);
+      map.con_after = String(cstats.began_after_recession);
+      map.con_median = String(cstats.median_lag_months);
+      map.con_unattached = String(cstats.unattached);
+    }
+    // The newest-episode footnote renders from the computed row, so it stays
+    // true when that row eventually resolves either way (the family lesson).
+    if (ep.episodes && ep.episodes.length) {
+      var newest = ep.episodes[ep.episodes.length - 1];
+      map.newest_label = newest.start.slice(0, 4);
+      var shape = "in the newest episode standards peaked at +" +
+                  newest.peak.value.toFixed(1) + " in " + monthWord(newest.peak.month) +
+                  " across " + newest.quarters_signalling + " signalling quarters";
+      if (newest.outcome === "none_in_window") {
+        map.newest_row = shape + ", and no recession came within the window; " +
+          "banks tightened hard and the economy absorbed it.";
+      } else if (newest.outcome === "pending") {
+        map.newest_row = shape + "; its attribution window is still open.";
+      } else if (newest.outcome === "coincident") {
+        map.newest_row = shape + "; the " + monthWord(newest.recessions[0]) +
+          " recession was already underway when the alarm fired.";
+      } else {
+        map.newest_row = shape + ", followed by the " +
+          monthWord(newest.recessions[0]) + " recession " +
+          newest.lead_from_alarm_months + " months after the alarm.";
+      }
+    }
+    return map;
+  }
+
+  function buildChip(p) {
+    var st = (p.analysis || {}).status || {};
+    var std = st.us_std_ci_large;
+    var chip = document.getElementById("chip");
+    if (!std) return;
+    var signal = !!st.signal_active;
+    var demand = st.us_demand_ci_large;
+    var html = (signal ? "<b>Tightening signal</b>" : "<b>Standards neutral</b>") +
+               " · C&I net " + fmtNet(std.latest[1]) + "% tightening" +
+               (demand ? " · demand " + fmtNet(demand.latest[1]) : "");
+    chip.innerHTML = '<span class="dot"></span><span>' + html + "</span>";
+    chip.setAttribute("data-state", signal ? "signal" : "normal");
+    chip.hidden = false;
+  }
+
+  function buildTiles(p) {
+    var an = p.analysis || {};
+    var st = an.status || {};
+    var t = [];
+    function month(iso) { return iso.slice(0, 7); }
+    var std = st.us_std_ci_large;
+    if (std) t.push({ label: "C&I standards", color: "var(--series-1)",
+                      value: fmtNet(std.latest[1]),
+                      note: month(std.latest[0]) + " · net % tightening" });
+    if (st.us_willingness_consumer) t.push({ label: "Consumer willingness", color: "var(--series-2)",
+                                             value: fmtNet(st.us_willingness_consumer.latest[1]),
+                                             note: month(st.us_willingness_consumer.latest[0]) + " · positive = more willing" });
+    var ci = S("us_ci_loans_yoy");
+    if (ci) t.push({ label: "C&I loan growth", color: "var(--series-1)",
+                     value: fmtPct1(ci.obs[ci.obs.length - 1][1]),
+                     note: month(ci.as_of) + " · year over year" });
+    if (st.us_delinq_all) t.push({ label: "Delinquencies", color: "var(--series-4)",
+                                   value: st.us_delinq_all.latest[1].toFixed(2) + "%",
+                                   note: month(st.us_delinq_all.latest[0]) + " · all bank loans" });
+    var cstats = (an.contractions || {}).stats;
+    if (cstats && cstats.attached) {
+      t.push({ label: "Volumes trail", color: "var(--series-3)",
+               value: cstats.began_after_recession + " of " + cstats.attached,
+               note: "contractions began after the recession · median lag " + cstats.median_lag_months + " mo" });
+    }
+    document.getElementById("tiles").innerHTML = t.map(function (x) {
+      return '<div class="tile"><div class="label"><span class="swatch" style="background:' + x.color + '"></span>' + x.label +
+             '</div><div class="value">' + x.value + '</div><div class="note">' + x.note + "</div></div>";
+    }).join("");
+  }
+
+  function buildEpisodes(p) {
+    var ep = p.analysis && p.analysis.episodes;
+    if (!ep || !ep.episodes) return;
+    var rows = ep.episodes.slice().reverse().map(function (e) {
+      var rec, lead;
+      if (e.recessions.length) {
+        rec = e.recessions.map(monthWord).join(" + ");
+        if (e.outcome === "coincident") rec += ' <span class="tag">(alarm trailed)</span>';
+        lead = (e.lead_from_alarm_months > 0 ? "+" : "") + e.lead_from_alarm_months + " mo";
+      } else if (e.outcome === "pending") {
+        rec = "<b>none (yet)</b>"; lead = "—";
+      } else {
+        rec = "none within window"; lead = "—";
+      }
+      var trough = e.left_censored
+        ? '<span class="tag">left-censored (survey starts here)</span>'
+        : monthWord(e.trough.month) + " (" + fmtNet(e.trough.value) + ")";
+      return "<tr><td>" + trough +
+             "</td><td>" + monthWord(e.start) +
+             "</td><td>+" + e.peak.value.toFixed(1) + " (" + monthWord(e.peak.month) + ")" +
+             "</td><td>" + e.quarters_signalling +
+             "</td><td>" + rec + "</td><td>" + lead + "</td></tr>";
+    });
+    document.querySelector("#ep-tbl tbody").innerHTML = rows.join("");
+  }
+
+  function buildContractions(p) {
+    var con = p.analysis && p.analysis.contractions;
+    if (!con || !con.contractions) return;
+    var rows = con.contractions.slice().reverse().map(function (c) {
+      var peak = c.recession_peak
+        ? monthWord(c.recession_peak)
+        : '<span class="tag">none within 2y</span>';
+      var lag = c.lag_months === null ? "—"
+        : (c.lag_months > 0 ? "+" : "") + c.lag_months + " mo";
+      return "<tr><td>" + monthWord(c.start) + "</td><td>" + monthWord(c.end) +
+             "</td><td>" + c.months + "</td><td>" + fmtPct1(c.deepest.value) +
+             " (" + monthWord(c.deepest.month) + ")</td><td>" + peak +
+             "</td><td>" + lag + "</td></tr>";
+    });
+    document.querySelector("#con-tbl tbody").innerHTML = rows.join("");
+  }
+
+  function buildRevisions(log) {
+    var cap = document.getElementById("rev-cap");
+    var wrap = document.getElementById("rev-wrap");
+    if (!log || !log.total) {
+      cap.textContent = "No revisions to already-published observations logged yet; the first scheduled refreshes will start filling this in.";
+      return;
+    }
+    cap.textContent = log.total.toLocaleString() + " revision event" + (log.total === 1 ? "" : "s") +
+      " logged" + (log.recent.length < log.total ? " · showing the " + log.recent.length + " most recent" : "") + ".";
+    wrap.style.display = "";
+    document.querySelector("#rev-tbl tbody").innerHTML = log.recent.map(function (r) {
+      return "<tr><td>" + (r.observed_at || "").slice(0, 10) + "</td><td>" + (r.series || "") +
+             "</td><td>" + (r.changed || "") + "</td><td>" + ((r.span || []).join(" to ")) +
+             "</td><td>" + (r.max_delta === undefined ? "—" : r.max_delta) + "</td></tr>";
+    }).join("");
+  }
+
+  // ------------------------------------------------------------------
+  // wiring
+  // ------------------------------------------------------------------
+  document.querySelectorAll("[data-series]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.showDemand = !state.showDemand;
+      b.setAttribute("aria-pressed", state.showDemand ? "true" : "false");
+      renderMain();
+    });
+  });
+
+  var resizeTimer;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { Object.keys(charts).forEach(function (k) { charts[k].draw(); }); }, 120);
+  });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(renderAll);
+  }
+
+  fetch("/api/data", { cache: "no-cache" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (p) {
+      state.p = p;
+      document.getElementById("status").style.display = "none";
+
+      var count = 0, obsTotal = 0, key;
+      for (key in p.series) { count++; obsTotal += p.series[key].obs.length; }
+      var std = S("us_std_ci_large");
+      document.getElementById("stamp").textContent =
+        count + " series · " + obsTotal.toLocaleString() + " observations · SLOOS through " +
+        (std ? std.as_of.slice(0, 7) : "—") + " · refreshed " +
+        (p.series_fetched_at || "").slice(0, 10) + " · built __BUILD_TIME__";
+
+      fillTokens(buildTokens(p));
+      buildChip(p);
+      buildTiles(p);
+      buildEpisodes(p);
+      buildContractions(p);
+      buildRevisions(p.changelog);
+      renderAll();
+    })
+    .catch(function (e) {
+      document.getElementById("status").textContent = "Could not load the data (" + e.message + "). The updater may be briefly unavailable; try a reload in a minute.";
+    });
+})();
+</script>
+</body>
+</html>
