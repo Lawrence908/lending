@@ -693,18 +693,17 @@ td .tag { color: var(--muted); font-size: 0.78rem; }
     return map;
   }
 
+  /* Rendered from analysis.status.headline rather than recomposed here: the
+     server owns the rule and its wording, so the hub and the page cannot
+     drift into saying different things about the same reading. */
   function buildChip(p) {
-    var st = (p.analysis || {}).status || {};
-    var std = st.us_std_ci_large;
+    var head = ((p.analysis || {}).status || {}).headline;
     var chip = document.getElementById("chip");
-    if (!std) return;
-    var signal = !!st.signal_active;
-    var demand = st.us_demand_ci_large;
-    var html = (signal ? "<b>Tightening signal</b>" : "<b>Standards neutral</b>") +
-               " · C&I net " + fmtNet(std.latest[1]) + "% tightening" +
-               (demand ? " · demand " + fmtNet(demand.latest[1]) : "");
-    chip.innerHTML = '<span class="dot"></span><span>' + html + "</span>";
-    chip.setAttribute("data-state", signal ? "signal" : "normal");
+    if (!head) return;
+    chip.innerHTML = '<span class="dot"></span><span><b>' + head.label + "</b> · " +
+                     head.detail + "</span>";
+    chip.setAttribute("data-state", head.state);
+    chip.title = head.rule;
     chip.hidden = false;
   }
 

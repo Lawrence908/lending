@@ -300,6 +300,16 @@ def _mi(year_month):
     return int(year) * 12 + int(month) - 1
 
 
+CHIP_RULE = ("The tightening signal is on when the net percentage of banks "
+             "tightening C&I standards for large firms is at or above +20.")
+
+
+def _signed(value, places=1):
+    """The page's sign convention: U+2212 for negatives, never a hyphen."""
+    sign = "+" if value > 0 else ("−" if value < 0 else "")
+    return "%s%.*f" % (sign, places, abs(value))
+
+
 def build_status(series):
     status = {}
     std = series.get("us_std_ci_large")
@@ -317,6 +327,21 @@ def build_status(series):
         entry = series.get(sid)
         if entry:
             status[sid] = {"latest": [entry["obs"][-1][0], entry["obs"][-1][1]]}
+
+    standards = status.get("us_std_ci_large")
+    if standards:
+        signal = bool(status.get("signal_active"))
+        detail = "C&I net %s%% tightening" % _signed(standards["latest"][1])
+        demand = status.get("us_demand_ci_large")
+        if demand:
+            detail += " · demand %s" % _signed(demand["latest"][1])
+        status["headline"] = {
+            "state": "signal" if signal else "normal",
+            "label": "Tightening signal" if signal else "Standards neutral",
+            "detail": detail,
+            "as_of": standards["latest"][0],
+            "rule": CHIP_RULE,
+        }
     return status
 
 
@@ -689,7 +714,14 @@ def build_data_payload():
     try:
         doc = _load("series.json")
         payload["series"] = doc.get("series", {})
-        payload["analysis"] = doc.get("analysis", {})
+        # The stored block is written by the refresh, which runs out of
+        # process; one written before the status contract existed has no
+        # headline, and the chip would stay hidden until the next scheduled
+        # run. Recomputing the cheap half here makes a deploy take effect now.
+        analysis = dict(doc.get("analysis", {}))
+        if "headline" not in (analysis.get("status") or {}):
+            analysis["status"] = build_status(payload["series"])
+        payload["analysis"] = analysis
         payload["series_fetched_at"] = doc.get("fetched_at")
         payload["series_errors"] = doc.get("errors", {})
     except Exception as exc:  # noqa: BLE001 - charts degrade, page renders
@@ -725,10 +757,16 @@ class Handler(BaseHTTPRequestHandler):
                 doc = _load("series.json")
                 std = doc.get("series", {}).get("us_std_ci_large", {})
                 st = doc.get("analysis", {}).get("status", {})
+                # A stored block written before the status contract existed
+                # has no headline; recompute so health and /api/data agree
+                # rather than the hub seeing one and the page the other.
+                if "headline" not in st:
+                    st = build_status(doc.get("series", {}))
                 self._send(200, {
                     "status": "ok",
                     "series": len(doc.get("series", {})),
                     "latest": std.get("as_of"),
+                    "headline": st.get("headline"),
                     "signal_active": st.get("signal_active"),
                     "errors": len(doc.get("errors", {})),
                     "fetched_at": doc.get("fetched_at"),
