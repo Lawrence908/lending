@@ -69,3 +69,20 @@ as fallback (`FRED_API_KEY` in `.env`, gitignored).
 
 Assembled with Claude, made by Anthropic. Survey balances, published aggregates, and
 computed history with both rules printed. No forecasts.
+
+## Data and attribution
+
+The MIT licence covers this repository's code. It does not cover the data, which is not
+mine: every series belongs to the body that publishes it and carries that body's own terms.
+Each series names its `source` and `source_url` so the original is always one click away.
+
+US series are works of the Federal Reserve (H.8, G.19 and the Senior Loan Officer
+Opinion Survey), not subject to copyright. Canadian survey data comes from the Bank of
+Canada Valet API under its [terms of use](https://www.bankofcanada.ca/terms/).
+
+Recession bands come from econ-core: the US from the NBER chronology via FRED `USREC`,
+Canada from the C.D. Howe Institute Business Cycle Council chronology.
+
+Series reached through FRED are redistributed by the Federal Reserve Bank of St. Louis
+under [its terms of use](https://fred.stlouisfed.org/legal/), which ask that you cite the
+original source and note that it was accessed via FRED.
