@@ -6,7 +6,7 @@ spreads blow out and usually before recessions arrive, while lending VOLUMES tra
 cycle by quarters. This site shows both ends of that pipeline and scores the leading one.
 
 Site seven of the family, fifth econ-core consumer. Written 2026-09-07; every series
-probed live from daedalus that day through econcore's fetchers.
+probed live that day through econcore's fetchers.
 
 ## Verified sources
 
